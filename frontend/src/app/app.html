@@ -1,0 +1,107 @@
+<header class="site-header">
+  <a class="brand" href="/">SideQuest</a>
+  <nav aria-label="Account">
+    @if (user()) {
+      <button type="button" [class.selected]="view() === 'profile'" [disabled]="busy()" (click)="navigate('profile')">Il mio profilo</button>
+      @if (user()?.role === 'ADMIN') {
+        <button type="button" [class.selected]="view() === 'admin'" [disabled]="busy()" (click)="navigate('admin')">Account registrati</button>
+      }
+      <button type="button" [disabled]="busy()" (click)="logout()">Esci</button>
+    } @else {
+      <button type="button" [class.selected]="view() === 'login'" [disabled]="busy()" (click)="navigate('login')">Accedi</button>
+      <button type="button" [class.selected]="view() === 'register'" [disabled]="busy()" (click)="navigate('register')">Registrati</button>
+    }
+  </nav>
+</header>
+
+<main [attr.aria-busy]="busy()">
+  <div aria-live="polite" aria-atomic="true">
+    @if (restoringSession()) { <p class="notice">Verifica della sessione in corso. Puoi già compilare i moduli.</p> }
+    @if (busy()) { <p class="notice">Operazione in corso, attendi la risposta del server…</p> }
+    @if (message()) { <p class="notice" [class.error]="failed()">{{ message() }}</p> }
+  </div>
+
+  @if (view() === 'register') {
+    <section class="panel narrow" aria-labelledby="register-title">
+      <h1 id="register-title">Crea il tuo account</h1>
+      <p>Registrati per iniziare a usare SideQuest.</p>
+      <form #registerform (submit)="register($event, registerform)">
+        <label for="register-email">Email</label>
+        <input id="register-email" name="email" type="email" autocomplete="email" maxlength="254" required>
+        <label for="register-nickname">Nickname</label>
+        <input id="register-nickname" name="nickname" type="text" autocomplete="nickname" minlength="3" maxlength="50" aria-describedby="nickname-help" required>
+        <small id="nickname-help">Da 3 a 50 caratteri: lettere, numeri, punto, trattino e underscore.</small>
+        <label for="register-role">Tipo di account</label>
+        <select id="register-role" name="role" required>
+          <option value="USER">Utente</option>
+          <option value="ADMIN">Amministratore</option>
+        </select>
+        <label for="register-password">Password</label>
+        <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" aria-describedby="password-help" required>
+        <small id="password-help">Almeno 12 caratteri. Puoi usare una frase facile da ricordare.</small>
+        <label for="register-confirmation">Ripeti la password</label>
+        <input id="register-confirmation" name="confirmation" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+        <button class="primary" type="submit" [disabled]="busy()">{{ busy() ? 'Attendi…' : 'Crea account' }}</button>
+      </form>
+    </section>
+  } @else if (view() === 'login') {
+    <section class="panel narrow" aria-labelledby="login-title">
+      <h1 id="login-title">Accedi a SideQuest</h1>
+      <p>Inserisci le credenziali del tuo account.</p>
+      <form #loginform (submit)="login($event, loginform)">
+        <label for="login-email">Email</label>
+        <input id="login-email" name="email" type="email" autocomplete="username" maxlength="254" required>
+        <label for="login-password">Password</label>
+        <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+        <button class="primary" type="submit" [disabled]="busy()">{{ busy() ? 'Attendi…' : 'Accedi' }}</button>
+      </form>
+      <p class="form-footer">Non hai un account? <button class="text-button" type="button" [disabled]="busy()" (click)="navigate('register')">Registrati</button></p>
+    </section>
+  } @else if (view() === 'profile') {
+    @if (user(); as current) {
+      <section class="panel narrow" aria-labelledby="profile-title">
+        <h1 id="profile-title">Il mio profilo</h1>
+        <dl class="details">
+          <div><dt>Email</dt><dd>{{ current.email }}</dd></div>
+          <div><dt>Ruolo</dt><dd>{{ current.role === 'ADMIN' ? 'Amministratore' : 'Utente' }}</dd></div>
+          <div><dt>Punteggio</dt><dd>{{ current.score }}</dd></div>
+        </dl>
+        <form #profileform (submit)="saveProfile($event, profileform)">
+          <label for="profile-nickname">Nickname</label>
+          <input id="profile-nickname" name="nickname" type="text" autocomplete="nickname" [value]="current.nickname" minlength="3" maxlength="50" required>
+          <label for="profile-bio">Biografia <span class="optional">(facoltativa)</span></label>
+          <textarea id="profile-bio" name="bio" [value]="current.bio ?? ''" rows="4" maxlength="500" aria-describedby="bio-help"></textarea>
+          <small id="bio-help">Massimo 500 caratteri.</small>
+          <button class="primary" type="submit" [disabled]="busy()">{{ busy() ? 'Attendi…' : 'Salva modifiche' }}</button>
+        </form>
+      </section>
+    }
+  } @else if (view() === 'admin') {
+    <section class="panel" aria-labelledby="users-title">
+      <h1 id="users-title">Utenti e amministratori</h1>
+      <p>{{ total() }} account registrati, inclusi gli amministratori. Disattivando un utente, le sue sessioni vengono chiuse.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th scope="col">Nickname</th><th scope="col">Email</th><th scope="col">Ruolo</th><th scope="col">Stato</th><th scope="col">Azione</th></tr></thead>
+          <tbody>
+            @for (item of users(); track item.id) {
+              <tr>
+                <td>{{ item.nickname }}</td><td>{{ item.email }}</td>
+                <td>{{ item.role === 'ADMIN' ? 'Amministratore' : 'Utente' }}</td>
+                <td>{{ item.isActive ? 'Attivo' : 'Disattivato' }}</td>
+                <td>@if (item.role === 'USER') { <button type="button" [disabled]="busy()" (click)="changeStatus(item)">{{ item.isActive ? 'Disattiva' : 'Riattiva' }}</button> }</td>
+              </tr>
+            } @empty { <tr><td colspan="5">Nessun account da mostrare.</td></tr> }
+          </tbody>
+        </table>
+      </div>
+      <nav class="pagination" aria-label="Pagine utenti">
+        <button type="button" [disabled]="busy() || page() <= 1" (click)="loadUsers(page() - 1)">Precedente</button>
+        <span>Pagina {{ page() }}</span>
+        <button type="button" [disabled]="busy() || page() * 10 >= total()" (click)="loadUsers(page() + 1)">Successiva</button>
+      </nav>
+    </section>
+  }
+</main>
+
+<footer class="site-footer">SideQuest · Progetto di Tecnologie Web e Ingegneria del Software</footer>

@@ -24,8 +24,8 @@ Progetto integrato per gli insegnamenti di **Tecnologie Web** e **Ingegneria del
 - **Fuso Orario:** `Europe/Rome`. Scadenza e controllo dei timer gestiti esclusivamente dal server.
 - **Testing & Qualità:**
   - Node.js Test Runner integrato per test unitari e di integrazione HTTP.
-  - Test End-to-End automatici (Playwright).
-  - Analisi statica del codice back-end con SonarQube.
+  - Test End-to-End automatici con Playwright previsti, ancora da implementare.
+  - Configurazione SonarQube predisposta; analisi statica del back-end da eseguire.
 
 ---
 
@@ -38,4 +38,5 @@ sidequest/
 ├── frontend/      # Single Page Application in Angular
 │   └── src/       # Componenti, servizi e layout responsive
 ├── e2e/           # Test End-to-End automatici con Playwright
-└── docs/          # Documentazione di Ingegneria del Software (SRS) e Tecnologie Web
+└── scripts/       # Preparazione del pacchetto per Azure
+```
