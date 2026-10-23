@@ -1,0 +1,81 @@
+name: Verifica e pubblica SideQuest
+
+on:
+  push:
+    branches:
+      - 'main'
+  workflow_dispatch:
+
+concurrency:
+  group: sidequest-production
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configura Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Installa dipendenze backend
+        working-directory: backend
+        run: npm ci
+
+      - name: Installa dipendenze frontend
+        working-directory: frontend
+        run: npm ci
+
+      - name: Test backend
+        working-directory: backend
+        run: npm test
+
+      - name: Controlla frontend
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Prepara pacchetto Azure
+        shell: powershell
+        run: ./scripts/package-azure.ps1
+
+      - name: Carica pacchetto
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-app
+          path: tmp/sidequest-azure.zip
+          if-no-files-found: error
+          retention-days: 1
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Scarica pacchetto
+        uses: actions/download-artifact@v4
+        with:
+          name: node-app
+
+      - name: Accedi ad Azure
+        uses: azure/login@v2
+        with:
+          client-id: "9cd0cc17-3227-4455-9453-bae7aa672c9e"
+          tenant-id: "2fcfe26a-bb62-46b0-b1e3-28f9da0c45fd"
+          subscription-id: "3cbb81b5-dea5-43c6-90c5-3c7f2234d0ab"
+
+      - name: Pubblica su Azure
+        uses: azure/webapps-deploy@v3
+        id: deploy-to-webapp
+        with:
+          app-name: 'sidequest-unina'
+          slot-name: 'Production'
+          package: sidequest-azure.zip
