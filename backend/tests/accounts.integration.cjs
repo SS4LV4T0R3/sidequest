@@ -338,6 +338,25 @@ it('limita i tentativi di autenticazione e restituisce Retry-After', async () =>
   assert(Number(response.headers.get('retry-after')) > 0);
 });
 
+it('rifiuta codifiche non supportate senza restituire un errore interno', async () => {
+  for (const headers of [
+    { 'Content-Type': 'application/json; charset=iso-8859-1' },
+    { 'Content-Encoding': 'non-supportata' }
+  ]) {
+    const result = await request('POST', '/api/auth/login', {}, undefined, headers);
+    assert.equal(result.response.status, 415);
+    assert.equal(result.body.error.code, 'UNSUPPORTED_FORMAT');
+  }
+});
+
+it('rifiuta URL malformati e dati compressi non validi con stato 400', async () => {
+  const malformed = await request('PATCH', '/api/admin/users/%ZZ/status', { isActive: false }, adminCookie);
+  assert.equal(malformed.response.status, 400);
+  const compressed = await request('POST', '/api/auth/login', {}, undefined, { 'Content-Encoding': 'gzip' });
+  assert.equal(compressed.response.status, 400);
+  assert.equal(compressed.body.error.code, 'INVALID_REQUEST');
+});
+
 it('inizializza SQLite anche in produzione senza perdere gli utenti esistenti', async () => {
   const initializedFile = path.join(directory, 'initialized.sqlite');
   const initial = runScript('initDatabase', { DB_STORAGE: initializedFile });

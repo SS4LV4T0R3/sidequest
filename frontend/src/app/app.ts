@@ -44,7 +44,7 @@ export class App {
 
   protected register(event: Event, form: HTMLFormElement) {
     event.preventDefault();
-    if (this.busy() || !form.reportValidity()) return;
+    if (this.busy() || !this.validateForm(form)) return;
     const values = new FormData(form);
     const password = String(values.get('password'));
     if (password !== values.get('confirmation')) {
@@ -66,7 +66,7 @@ export class App {
 
   protected login(event: Event, form: HTMLFormElement) {
     event.preventDefault();
-    if (this.busy() || !form.reportValidity()) return;
+    if (this.busy() || !this.validateForm(form)) return;
     const values = new FormData(form);
     this.startRequest();
     this.accounts.login(String(values.get('email')), String(values.get('password'))).subscribe({
@@ -82,7 +82,7 @@ export class App {
 
   protected saveProfile(event: Event, form: HTMLFormElement) {
     event.preventDefault();
-    if (this.busy() || !form.reportValidity()) return;
+    if (this.busy() || !this.validateForm(form)) return;
     const values = new FormData(form);
     this.startRequest();
     this.accounts.updateProfile(String(values.get('nickname')), String(values.get('bio'))).subscribe({
@@ -142,6 +142,34 @@ export class App {
     this.busy.set(true);
     this.failed.set(false);
     this.message.set('');
+  }
+
+  private validateForm(form: HTMLFormElement): boolean {
+    if (!form.reportValidity()) return false;
+    const nickname = form.elements.namedItem('nickname') as HTMLInputElement | null;
+    const password = form.elements.namedItem('password') as HTMLInputElement | null;
+    const bio = form.elements.namedItem('bio') as HTMLTextAreaElement | null;
+    let message = '';
+    if (nickname && !/^[\p{L}\p{N}._-]{3,50}$/u.test(nickname.value.trim())) {
+      message = 'Il nickname deve contenere da 3 a 50 lettere, numeri, punti, trattini o underscore.';
+    }
+    if (password) {
+      // Conteggio Unicode coerente con il backend.
+      const length = [...password.value].length;
+      const minimum = this.view() === 'register' ? 12 : 1;
+      if (!message && (length < minimum || length > 128)) {
+        message = `La password deve contenere da ${minimum} a 128 caratteri.`;
+      }
+    }
+    if (!message && bio && [...bio.value].length > 500) {
+      message = 'La biografia può contenere al massimo 500 caratteri.';
+    }
+    if (message) {
+      this.failed.set(true);
+      this.message.set(message);
+      return false;
+    }
+    return true;
   }
 
   private showError(error: HttpErrorResponse) {

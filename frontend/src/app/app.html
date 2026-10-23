@@ -29,7 +29,7 @@
         <label for="register-email">Email</label>
         <input id="register-email" name="email" type="email" autocomplete="email" maxlength="254" required>
         <label for="register-nickname">Nickname</label>
-        <input id="register-nickname" name="nickname" type="text" autocomplete="nickname" minlength="3" maxlength="50" aria-describedby="nickname-help" required>
+        <input id="register-nickname" name="nickname" type="text" autocomplete="nickname" maxlength="100" aria-describedby="nickname-help" required>
         <small id="nickname-help">Da 3 a 50 caratteri: lettere, numeri, punto, trattino e underscore.</small>
         <label for="register-role">Tipo di account</label>
         <select id="register-role" name="role" required>
@@ -37,10 +37,10 @@
           <option value="ADMIN">Amministratore</option>
         </select>
         <label for="register-password">Password</label>
-        <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" aria-describedby="password-help" required>
+        <input id="register-password" name="password" type="password" autocomplete="new-password" maxlength="256" aria-describedby="password-help" required>
         <small id="password-help">Almeno 12 caratteri. Puoi usare una frase facile da ricordare.</small>
         <label for="register-confirmation">Ripeti la password</label>
-        <input id="register-confirmation" name="confirmation" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+        <input id="register-confirmation" name="confirmation" type="password" autocomplete="new-password" maxlength="256" required>
         <button class="primary" type="submit" [disabled]="busy()">{{ busy() ? 'Attendi…' : 'Crea account' }}</button>
       </form>
     </section>
@@ -52,7 +52,7 @@
         <label for="login-email">Email</label>
         <input id="login-email" name="email" type="email" autocomplete="username" maxlength="254" required>
         <label for="login-password">Password</label>
-        <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+        <input id="login-password" name="password" type="password" autocomplete="current-password" maxlength="256" required>
         <button class="primary" type="submit" [disabled]="busy()">{{ busy() ? 'Attendi…' : 'Accedi' }}</button>
       </form>
       <p class="form-footer">Non hai un account? <button class="text-button" type="button" [disabled]="busy()" (click)="navigate('register')">Registrati</button></p>
@@ -68,9 +68,9 @@
         </dl>
         <form #profileform (submit)="saveProfile($event, profileform)">
           <label for="profile-nickname">Nickname</label>
-          <input id="profile-nickname" name="nickname" type="text" autocomplete="nickname" [value]="current.nickname" minlength="3" maxlength="50" required>
+          <input id="profile-nickname" name="nickname" type="text" autocomplete="nickname" [value]="current.nickname" maxlength="100" required>
           <label for="profile-bio">Biografia <span class="optional">(facoltativa)</span></label>
-          <textarea id="profile-bio" name="bio" [value]="current.bio ?? ''" rows="4" maxlength="500" aria-describedby="bio-help"></textarea>
+          <textarea id="profile-bio" name="bio" [value]="current.bio ?? ''" rows="4" maxlength="1000" aria-describedby="bio-help"></textarea>
           <small id="bio-help">Massimo 500 caratteri.</small>
           <button class="primary" type="submit" [disabled]="busy()">{{ busy() ? 'Attendi…' : 'Salva modifiche' }}</button>
         </form>
