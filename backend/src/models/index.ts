@@ -24,4 +24,4 @@ Session.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 export { User, Quest, Objective, Participation, Notification, Session };
 export type { UserAttributes } from './User';
-export type { QuestAttributes } from './Quest';
+

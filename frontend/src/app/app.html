@@ -3,6 +3,7 @@
   <nav aria-label="Account">
     @if (user()) {
       <button type="button" [class.selected]="view() === 'profile'" [disabled]="busy()" (click)="navigate('profile')">Il mio profilo</button>
+      <button type="button" [class.selected]="view() === 'quests'" [disabled]="busy()" (click)="navigate('quests')">Missioni</button>
       @if (user()?.role === 'ADMIN') {
         <button type="button" [class.selected]="view() === 'admin'" [disabled]="busy()" (click)="navigate('admin')">Account registrati</button>
       }
@@ -76,6 +77,72 @@
         </form>
       </section>
     }
+  } @else if (view() === 'quests') {
+    <section class="panel" aria-labelledby="quests-title">
+      <h1 id="quests-title">Gestione Missioni</h1>
+      <p>Aggiungi nuove missioni al database o esplora quelle esistenti.</p>
+      
+      <div style="display: grid; gap: 2rem; grid-template-columns: 1fr; margin-top: 1.5rem;">
+        <!-- Modulo Creazione (R02) -->
+        <form #questform (submit)="createQuest($event, questform)" class="panel narrow" style="margin: 0;">
+          <h2>Nuova Missione</h2>
+          <label for="quest-title">Titolo</label>
+          <input id="quest-title" name="title" type="text" required>
+          
+          <label for="quest-presentation">Presentazione</label>
+          <textarea id="quest-presentation" name="presentation" rows="3" required></textarea>
+          
+          <label for="quest-category">Categoria</label>
+          <input id="quest-category" name="category" type="text" required>
+          
+          <label for="quest-type">Tipologia</label>
+          <select id="quest-type" name="type" required>
+            <option value="ORDINARY">Ordinaria</option>
+            <option value="SECRET_TIMED">Segreta a Tempo</option>
+          </select>
+          
+          <label for="quest-time">Tempo limite (secondi - opzionale)</label>
+          <input id="quest-time" name="timeLimitSeconds" type="number" min="0">
+          
+          <label for="quest-lat">Latitudine (opzionale)</label>
+          <input id="quest-lat" name="latitude" type="number" step="any">
+          
+          <label for="quest-lng">Longitudine (opzionale)</label>
+          <input id="quest-lng" name="longitude" type="number" step="any">
+          
+          <button class="primary" type="submit" [disabled]="busy()">{{ busy() ? 'Attendi…' : 'Crea Missione' }}</button>
+        </form>
+
+        <!-- Tabella Lettura (R03) -->
+        <div>
+          <h2>Missioni nel Database</h2>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Titolo</th>
+                  <th scope="col">Categoria</th>
+                  <th scope="col">Tipo</th>
+                  <th scope="col">Stato</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (quest of quests(); track quest.id) {
+                  <tr>
+                    <td>{{ quest.title }}</td>
+                    <td>{{ quest.category }}</td>
+                    <td>{{ quest.type === 'ORDINARY' ? 'Ordinaria' : 'A Tempo' }}</td>
+                    <td>{{ quest.status === 'DRAFT' ? 'Bozza' : 'Pubblicata' }}</td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="4">Nessuna missione presente. Inseriscine una!</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
   } @else if (view() === 'admin') {
     <section class="panel" aria-labelledby="users-title">
       <h1 id="users-title">Utenti e amministratori</h1>

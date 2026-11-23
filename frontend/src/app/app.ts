@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { AccountService, UserProfile } from './account.service';
+import { QuestService, Quest } from './quest.service'; // [R02/R03] Importiamo il servizio missioni
 
 @Component({
   selector: 'app-root',
@@ -10,16 +11,21 @@ import { AccountService, UserProfile } from './account.service';
 })
 export class App {
   private accounts = inject(AccountService);
+  private questService = inject(QuestService); // Iniezione del servizio
+
   protected user = signal<UserProfile | null>(null);
-  protected view = signal<'login' | 'register' | 'profile' | 'admin'>('login');
+  protected view = signal<'login' | 'register' | 'profile' | 'admin' | 'quests'>('login');
   protected busy = signal(false);
   protected restoringSession = signal(true);
   private sessionRequest: Subscription;
   protected message = signal('');
   protected failed = signal(false);
+  
   protected users = signal<UserProfile[]>([]);
   protected page = signal(1);
   protected total = signal(0);
+
+  protected quests = signal<Quest[]>([]); // [R03] Stato per memorizzare le missioni
 
   constructor() {
     this.sessionRequest = this.accounts.me().subscribe({
@@ -35,11 +41,12 @@ export class App {
     });
   }
 
-  protected navigate(view: 'login' | 'register' | 'profile' | 'admin') {
+  protected navigate(view: 'login' | 'register' | 'profile' | 'admin' | 'quests') {
     if (this.busy()) return;
     this.view.set(view);
     this.message.set('');
     if (view === 'admin') this.loadUsers(1);
+    if (view === 'quests') this.loadQuests(); // [R03] Carica le missioni quando si apre la schermata
   }
 
   protected register(event: Event, form: HTMLFormElement) {
@@ -135,8 +142,46 @@ export class App {
     });
   }
 
+  // [R03] Lettura Missioni dal database
+  protected loadQuests() {
+    this.startRequest();
+    this.questService.getQuests().subscribe({
+      next: (quests) => {
+        this.quests.set(quests);
+        this.busy.set(false);
+      },
+      error: (error) => this.showError(error)
+    });
+  }
+
+  // [R02] Invio form Creazione Missione
+  protected createQuest(event: Event, form: HTMLFormElement) {
+    event.preventDefault();
+    if (this.busy() || !form.reportValidity()) return;
+    const values = new FormData(form);
+    
+    const questData = {
+      title: String(values.get('title')),
+      presentation: String(values.get('presentation')),
+      category: String(values.get('category')),
+      type: values.get('type') as 'ORDINARY' | 'SECRET_TIMED',
+      timeLimitSeconds: values.get('timeLimitSeconds') ? Number(values.get('timeLimitSeconds')) : null,
+      latitude: values.get('latitude') ? Number(values.get('latitude')) : null,
+      longitude: values.get('longitude') ? Number(values.get('longitude')) : null
+    };
+
+    this.startRequest();
+    this.questService.createQuest(questData).subscribe({
+      next: () => {
+        form.reset();
+        this.message.set('Missione creata con successo!');
+        this.loadQuests(); // Ricarica la tabella dopo la creazione
+      },
+      error: (error) => this.showError(error)
+    });
+  }
+
   private startRequest() {
-    // Una risposta tardiva del ripristino non deve sovrascrivere un nuovo accesso.
     this.sessionRequest.unsubscribe();
     this.restoringSession.set(false);
     this.busy.set(true);

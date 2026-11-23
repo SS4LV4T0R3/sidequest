@@ -67,14 +67,14 @@ jobs:
           name: node-app
 
       - name: Accedi ad Azure
-        uses: azure/login@v3
+        uses: azure/login@935127ca5bb3c4b02c9c2c10060028383878f33f #v3
         with:
           client-id: "9cd0cc17-3227-4455-9453-bae7aa672c9e"
           tenant-id: "2fcfe26a-bb62-46b0-b1e3-28f9da0c45fd"
           subscription-id: "3cbb81b5-dea5-43c6-90c5-3c7f2234d0ab"
 
       - name: Pubblica su Azure
-        uses: azure/webapps-deploy@v3
+        uses: azure/webapps-deploy@b686016b4de8820a23519503685d8d03fbfa03a6 #v3
         id: deploy-to-webapp
         with:
           app-name: 'sidequest-unina'

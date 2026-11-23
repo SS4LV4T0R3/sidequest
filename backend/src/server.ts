@@ -6,6 +6,10 @@ import './models';
 
 async function startServer(): Promise<void> {
   await sequelize.authenticate();
+  
+  // [R02] Sincronizza il database: crea automaticamente le tabelle mancanti (Sessions, Users, Quests)
+  await sequelize.sync(); 
+
   const server = await new Promise<Server>((resolve, reject) => {
     const onListening = () => resolve(listener);
     const listener = typeof config.port === 'string'
