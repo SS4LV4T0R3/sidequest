@@ -33,22 +33,31 @@ Progetto integrato per gli insegnamenti di **Tecnologie Web** e **Ingegneria del
 | :--- | :--- |
 | Node.js Test Runner | Test unitari e di integrazione HTTP presenti nel backend |
 | Playwright | Test automatici nel browser da implementare |
-| SonarQube | Configurazione predisposta; analisi da eseguire |
+| SonarQube Cloud | Analisi automatica del backend a ogni push su `main` |
 
 ## Struttura del repository
 
 ```text
 sidequest/
 ├── .github/
-│   └── workflows/    # Controlli e pubblicazione automatica
+│   └── workflows/       # Test, compilazione e pubblicazione su Azure
 ├── backend/
-│   ├── src/         # API, servizi, modelli e configurazione
-│   └── tests/       # Test del backend
+│   ├── src/
+│   │   ├── config/       # Impostazioni del server e connessione a SQLite
+│   │   ├── controllers/  # Ricevono le richieste, chiamano i servizi e inviano le risposte
+│   │   ├── middleware/   # Controlli di accesso, limiti alle richieste e gestione degli errori
+│   │   ├── models/       # Definizione delle tabelle e delle relazioni con Sequelize
+│   │   ├── routes/       # Collegano gli indirizzi delle API ai controller
+│   │   ├── services/     # Operazioni su account, password e timer
+│   │   ├── scripts/      # Comandi per creare le tabelle e un amministratore
+│   │   ├── app.ts        # Collega route, middleware e file di Angular a Express
+│   │   └── server.ts     # Avvio e arresto del server
+│   └── tests/           # Test dei servizi, della configurazione e delle API
 ├── frontend/
-│   ├── public/      # Favicon e file statici
-│   └── src/         # Interfaccia Angular
-├── e2e/             # Test End-to-End automatici con Playwright
-└── scripts/         # Preparazione del pacchetto Azure
+│   ├── public/          # Favicon e altre risorse statiche
+│   └── src/             # Interfaccia Angular, stili e chiamate alle API
+├── e2e/                 # Test End-to-End nel browser con Playwright (previsti)
+└── scripts/             # Configurazione e creazione del pacchetto per Azure
 ```
 
 La cartella `e2e/` è prevista per i test Playwright; finché è vuota non viene inclusa da Git.

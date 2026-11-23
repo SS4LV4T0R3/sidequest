@@ -81,7 +81,9 @@ export class AccountService {
     const password = readPassword(data.password, 12);
     const bio = data.bio === undefined ? null : readBio(data.bio);
     // Solo per le prove: prima della consegna rimuovere data.role e il selettore nel frontend.
-    const role = trustedRole ?? (data.role === undefined ? 'USER' : data.role);
+    let role: unknown = 'USER';
+    if (data.role !== undefined) role = data.role;
+    if (trustedRole !== undefined) role = trustedRole;
     if (role !== 'USER' && role !== 'ADMIN') invalid('Ruolo non valido: scegliere utente o amministratore.');
     const passwordHash = await this.passwords.hash(password);
     return User.create({ email, nickname, passwordHash, bio, role });
@@ -100,6 +102,7 @@ export class AccountService {
       throw new AccountError(401, 'INVALID_CREDENTIALS', 'Email o password non corrette.');
     }
 
+    // Evita nuove sessioni se l'account viene disattivato durante il login.
     return sequelize.transaction(transactionOptions, async (transaction) => {
       const currentUser = await User.findByPk(user.id, { transaction });
       if (!currentUser?.isActive) {
@@ -141,13 +144,14 @@ export class AccountService {
   }
 
   async listUsers(page: number, pageSize: number) {
+    const offset = (page - 1) * pageSize;
     if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(pageSize)
-      || pageSize < 1 || pageSize > 50 || !Number.isSafeInteger((page - 1) * pageSize)) {
+      || pageSize < 1 || pageSize > 50 || !Number.isSafeInteger(offset)) {
       invalid('Paginazione non valida: page positiva e pageSize tra 1 e 50.');
     }
     const { rows, count } = await User.findAndCountAll({
       attributes: ['id', 'email', 'nickname', 'bio', 'role', 'score', 'isActive'],
-      order: [['id', 'ASC']], limit: pageSize, offset: (page - 1) * pageSize
+      order: [['id', 'ASC']], limit: pageSize, offset
     });
     return { users: rows.map(userProfile), total: count, page, pageSize };
   }
@@ -158,6 +162,7 @@ export class AccountService {
     if (!Number.isSafeInteger(userId) || userId < 1 || typeof isActive !== 'boolean') {
       invalid('ID utente o stato non valido.');
     }
+    // Disattivazione e revoca delle sessioni devono riuscire insieme.
     return sequelize.transaction(transactionOptions, async (transaction) => {
       const user = await User.findByPk(userId, { transaction });
       if (!user) throw new AccountError(404, 'USER_NOT_FOUND', 'Utente non trovato.');

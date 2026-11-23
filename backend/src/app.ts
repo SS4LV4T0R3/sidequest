@@ -1,11 +1,10 @@
-import express, { ErrorRequestHandler } from 'express';
+import express from 'express';
 import path from 'node:path';
 import { existsSync } from 'node:fs';
-import { UniqueConstraintError, ValidationError } from 'sequelize';
 import { config } from './config/environment';
-import { sequelize } from './config/database';
+import { errorHandler } from './middleware/errorHandler';
 import { accountRouter } from './routes/accounts';
-import { AccountError } from './services/AccountService';
+import { healthRouter } from './routes/health';
 
 // [R02] Import per il modulo Missioni
 import { QuestService } from './services/QuestService';
@@ -40,6 +39,7 @@ app.get('/api/health', async (_request, response) => {
 // Inizializzazione del servizio missioni passandogli l'istanza di Sequelize del tuo compagno
 const questService = new QuestService(sequelize);
 
+app.use('/api', healthRouter);
 app.use('/api', accountRouter);
 // [R02] Rotta base per le API delle missioni
 app.use('/api/quests', questsRouter(questService));
@@ -92,4 +92,5 @@ const errorHandler: ErrorRequestHandler = (error: unknown, _request, response, _
   response.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
 };
 
+app.use(errorHandler);
 app.use(errorHandler);
