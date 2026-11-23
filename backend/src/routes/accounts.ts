@@ -17,11 +17,11 @@ function readToken(request: Request): string | null {
   return /^[a-f0-9]{64}$/.test(value) ? value : null;
 }
 
-function handle(action: (request: Request, response: Response) => Promise<unknown>): RequestHandler {
+export function handle(action: (request: Request, response: Response) => Promise<unknown>): RequestHandler {
   return (request, response, next) => { action(request, response).catch(next); };
 }
 
-const requireUser: RequestHandler = (request, response, next) => {
+export const requireUser: RequestHandler = (request, response, next) => {
   accounts.currentUser(readToken(request)).then((user) => {
     response.locals.user = user;
     next();
