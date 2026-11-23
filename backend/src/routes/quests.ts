@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { QuestService } from '../services/QuestService';
-import { requireUser, handle } from './accounts'; // [R02] Importiamo il guardiano e il gestore errori del tuo compagno
+// [R02] Importiamo il guardiano
+import { requireUser } from '../middleware/authentication';
+import { handleAsync as handle } from '../middleware/errorHandler';
 import { User } from '../models'; // [R02] Importiamo il modello User per leggere l'ID
 
 export function questsRouter(questService: QuestService) {
